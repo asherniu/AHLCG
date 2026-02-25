@@ -65,89 +65,44 @@
       <input type="text" id="filterInput" placeholder="Filter investigators…" oninput="renderList()" />
     </div>
     <div class="char-list" id="charList"></div>
+
+    <div class="sidebar-header" style="margin-top:12px;"><span>Pick History</span></div>
+    <div id="pickHistory" style="padding:8px;max-height:200px;overflow:auto;font-size:0.9rem;color:var(--muted);"></div>
+    <div style="padding:8px 8px 16px;">
+      <button class="btn-reset" onclick="clearHistory()" style="width:100%;">Clear History</button>
+    </div>
   </div>
 </div>
 
+<script src="investigators.js"></script>
 <script>
-  // ── DATA ─────────────────────────────────────────────────────────────────────
-  // Edit this array to add/remove investigators.
-  // Classes: Guardian, Seeker, Rogue, Mystic, Survivor, Neutral
-  const INVESTIGATORS_DATA = [
-  { "name": "Roland Banks",       "role": "The Fed",                    "class": "Guardian", "expansion": "Core Set" },
-  { "name": "Daisy Walker",       "role": "The Librarian",              "class": "Seeker",   "expansion": "Core Set" },
-  { "name": "Skids OToole",       "role": "The Ex-Con",                 "class": "Rogue",    "expansion": "Core Set" },
-  { "name": "Agnes Baker",        "role": "The Waitress",               "class": "Mystic",   "expansion": "Core Set" },
-  { "name": "Wendy Adams",        "role": "The Urchin",                 "class": "Survivor", "expansion": "Core Set" },
-  { "name": "Zoey Samaras",       "role": "The Chef",                   "class": "Guardian", "expansion": "The Dunwich Legacy" },
-  { "name": "Rex Murphy",         "role": "The Reporter",               "class": "Seeker",   "expansion": "The Dunwich Legacy" },
-  { "name": "Jenny Barnes",       "role": "The Dilettante",             "class": "Rogue",    "expansion": "The Dunwich Legacy" },
-  { "name": "Jim Culver",         "role": "The Musician",               "class": "Mystic",   "expansion": "The Dunwich Legacy" },
-  { "name": "Ashcan Pete",        "role": "The Drifter",                "class": "Survivor", "expansion": "The Dunwich Legacy" },
-  { "name": "Lola Hayes",         "role": "The Actress",                "class": "Neutral",  "expansion": "The Path to Carcosa" },
-  { "name": "Leo Anderson",       "role": "The Expedition Leader",      "class": "Guardian", "expansion": "The Forgotten Age" },
-  { "name": "Ursula Downs",       "role": "The Explorer",               "class": "Seeker",   "expansion": "The Forgotten Age" },
-  { "name": "Finn Edwards",       "role": "The Bootlegger",             "class": "Rogue",    "expansion": "The Forgotten Age" },
-  { "name": "Father Mateo",       "role": "The Priest",                 "class": "Mystic",   "expansion": "The Forgotten Age" },
-  { "name": "Calvin Wright",      "role": "The Haunted",                "class": "Survivor", "expansion": "The Forgotten Age" },
-  { "name": "Carolyn Fern",       "role": "The Psychologist",           "class": "Guardian", "expansion": "The Circle Undone" },
-  { "name": "Joe Diamond",        "role": "The Private Investigator",   "class": "Seeker",   "expansion": "The Circle Undone" },
-  { "name": "Preston Fairmont",   "role": "The Millionaire",            "class": "Rogue",    "expansion": "The Circle Undone" },
-  { "name": "Diana Stanley",      "role": "The Redeemed Cultist",       "class": "Mystic",   "expansion": "The Circle Undone" },
-  { "name": "Rita Young",         "role": "The Athlete",                "class": "Survivor", "expansion": "The Circle Undone" },
-  { "name": "Marie Lambeau",      "role": "The Entertainer",            "class": "Mystic",   "expansion": "The Circle Undone" },
-  { "name": "Sister Mary",        "role": "The Nun",                    "class": "Guardian", "expansion": "The Innsmouth Conspiracy" },
-  { "name": "Amanda Sharpe",      "role": "The Student",                "class": "Seeker",   "expansion": "The Innsmouth Conspiracy" },
-  { "name": "Trish Scarborough",  "role": "The Spy",                    "class": "Rogue",    "expansion": "The Innsmouth Conspiracy" },
-  { "name": "Dexter Drake",       "role": "The Magician",               "class": "Mystic",   "expansion": "The Innsmouth Conspiracy" },
-  { "name": "Silas Marsh",        "role": "The Sailor ",                "class": "Survivor", "expansion": "The Innsmouth Conspiracy" },
-  { "name": "Daniela Reyes",      "role": "The Mechanic",               "class": "Guardian", "expansion": "Edge of the Earth" },
-  { "name": "Norman Withers",     "role": "The Astronomer",             "class": "Seeker",   "expansion": "Edge of the Earth" },
-  { "name": "Monterey Jack",      "role": "The Archaeologist",          "class": "Rogue",    "expansion": "Edge of the Earth" },
-  { "name": "Lily Chen",          "role": "The Martial Artist",         "class": "Mystic",   "expansion": "Edge of the Earth" },
-  { "name": "Bob Jenkins",        "role": "The Salesman",               "class": "Survivor", "expansion": "Edge of the Earth" },
-  { "name": "Carson Sinclair",    "role": "The Butler",                 "class": "Guardian", "expansion": "The Scarlet Keys" },
-  { "name": "Vincent Lee",        "role": "The Doctor",                 "class": "Seeker",   "expansion": "The Scarlet Keys" },
-  { "name": "Kymani Jones",       "role": "The Security Consultant",    "class": "Rogue",    "expansion": "The Scarlet Keys" },
-  { "name": "Amina Zidane",       "role": "The Operator",               "class": "Mystic",   "expansion": "The Scarlet Keys" },
-  { "name": "Darrell Simmons",    "role": "The Photographer",           "class": "Survivor", "expansion": "The Scarlet Keys" },
-  { "name": "Charlie Kane",       "role": "The Politician",             "class": "Neutral",  "expansion": "The Scarlet Keys" },
-  { "name": "Wilson Richards",    "role": "The Handyman",               "class": "Guardian", "expansion": "The Feast of Hemlock Vale" },
-  { "name": "Kate Winthrop",      "role": "The Scientist",              "class": "Seeker",   "expansion": "The Feast of Hemlock Vale" },
-  { "name": "Alessandra Zorzi",   "role": "The Countess",               "class": "Rogue",    "expansion": "The Feast of Hemlock Vale" },
-  { "name": "Kōhaku Narukami",    "role": "The Folklorist",             "class": "Mystic",   "expansion": "The Feast of Hemlock Vale" },
-  { "name": "Hank Samson",        "role": "The Farmhand",               "class": "Survivor", "expansion": "The Feast of Hemlock Vale" },
-  { "name": "Marion Tavares",     "role": "The Trawler",                "class": "Guardian", "expansion": "The Drowned City" },
-  { "name": "Lucius Galloway",    "role": "The Poet",                   "class": "Seeker",   "expansion": "The Drowned City" },
-  { "name": "Michael McGlen",     "role": "The Gangster",               "class": "Rogue",    "expansion": "The Drowned City" },
-  { "name": "Agatha Crane Mystic","role": "The Parapsychologist",       "class": "Mystic",   "expansion": "The Drowned City" },
-  { "name": "Agatha Crane Seeker","role": "The Parapsychologist",       "class": "Seeker",   "expansion": "The Drowned City" },
-  { "name": "Gloria Goldberg",    "role": "The Writer",                 "class": "Mystic",   "expansion": "The Drowned City" },
-  { "name": "George Barnaby",     "role": "The Lawyer",                 "class": "Survivor", "expansion": "The Drowned City" },
-  { "name": "Nathaniel Cho",      "role": "The Boxer",                  "class": "Guardian", "expansion": "Investigator Starter Deck" },
-  { "name": "Harvey Walters",     "role": "The Professor",              "class": "Seeker",   "expansion": "Investigator Starter Deck" },
-  { "name": "Winifred Habbamock", "role": "The Aviatrix",               "class": "Rogue",    "expansion": "Investigator Starter Deck" },
-  { "name": "Stella Clark",       "role": "The Letter Carrier",         "class": "Survivor", "expansion": "Investigator Starter Deck" },
-  { "name": "Jacqueline Fine",    "role": "The Psychic",                "class": "Mystic",   "expansion": "Investigator Starter Deck" }
-  ];
-
   // ── CONSTANTS ────────────────────────────────────────────────────────────────
   const STORAGE_KEY = 'ahp_picked_v1';
+  const HISTORY_KEY = 'ahp_pick_history_v1';
 
   // ── STATE ────────────────────────────────────────────────────────────────────
   let investigators = [];
   let pickedSet     = new Set();   // confirmed picks only
+  let pickHistory   = [];
   let playerCount   = 1;
   let pendingPicks  = null;        // array of inv objects, or null
 
+  function makeId(inv){ return `${inv.name}||${inv.class}`; }
+
   // ── PERSISTENCE ──────────────────────────────────────────────────────────────
   function saveState() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...pickedSet])); } catch(e) {}
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...pickedSet]));
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(pickHistory));
+    } catch(e) {}
   }
   function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) pickedSet = new Set(JSON.parse(raw));
-    } catch(e) { pickedSet = new Set(); }
+      const rawHist = localStorage.getItem(HISTORY_KEY);
+      if (rawHist) pickHistory = JSON.parse(rawHist);
+    } catch(e) { pickedSet = new Set(); pickHistory = []; }
   }
 
   // ── BOOT ─────────────────────────────────────────────────────────────────────
@@ -157,6 +112,7 @@
     updateStats();
     renderResults(null);
     renderList();
+    renderHistory();
   }
 
   // ── PLAYER COUNT ─────────────────────────────────────────────────────────────
@@ -186,7 +142,7 @@
   // Pool = investigators not confirmed AND not currently in pendingPicks (for rerolls)
   function getAvailable(excludeExtra = []) {
     const excluded = new Set([...pickedSet, ...excludeExtra]);
-    return investigators.filter(inv => !excluded.has(inv.name));
+    return investigators.filter(inv => !excluded.has(makeId(inv)));
   }
 
   // ── PICK / CONFIRM / REDO ────────────────────────────────────────────────────
@@ -202,7 +158,10 @@
 
   function confirmPick() {
     if (!pendingPicks) return;
-    pendingPicks.forEach(inv => pickedSet.add(inv.name));
+    const picks = pendingPicks.map(inv => ({ name: inv.name, class: inv.class }));
+    pickHistory.push({ when: Date.now(), players: playerCount, picks });
+
+    pendingPicks.forEach(inv => pickedSet.add(makeId(inv)));
     pendingPicks = null;
     saveState();
     setConfirmBarVisible(false);
@@ -210,6 +169,7 @@
     updatePickBtn();
     renderResults(null);
     renderList();
+    renderHistory();
   }
 
   function redoPick() {
@@ -224,8 +184,8 @@
   function rerollCard(i) {
     if (!pendingPicks) return;
     // Exclude all other pending picks so no duplicate in the same draw
-    const keepNames = pendingPicks.filter((_, idx) => idx !== i).map(p => p.name);
-    const pool      = getAvailable(keepNames);
+    const keepIds = pendingPicks.filter((_, idx) => idx !== i).map(p => makeId(p));
+    const pool    = getAvailable(keepIds);
     if (pool.length === 0) return;
     pendingPicks[i] = pool[Math.floor(Math.random() * pool.length)];
     // Only animate/replace the one slot
@@ -237,9 +197,9 @@
   }
 
   // ── MANUAL MARK ──────────────────────────────────────────────────────────────
-  function toggleMark(name) {
+  function toggleMark(id) {
     if (pendingPicks) return;
-    pickedSet.has(name) ? pickedSet.delete(name) : pickedSet.add(name);
+    pickedSet.has(id) ? pickedSet.delete(id) : pickedSet.add(id);
     saveState();
     updateStats();
     renderList();
@@ -280,10 +240,14 @@
   function renderResults(source, animate) {
     const grid = document.getElementById('resultsGrid');
     grid.innerHTML = '';
+    grid.dataset.players = playerCount;
 
     for (let i = 0; i < playerCount; i++) {
       const card = document.createElement('div');
       card.className = 'result-card';
+      card.dataset.slot = i;
+      card.ondragover = e => e.preventDefault();
+      card.ondrop = e => { e.preventDefault(); dropIntoSlot(i, e.dataTransfer.getData('invId')); };
       const inv = source ? source[i] : null;
       if (inv) {
         fillCard(card, inv, i, animate);
@@ -295,6 +259,16 @@
     }
   }
 
+  function dropIntoSlot(slot, invId) {
+    const inv = investigators.find(i => makeId(i) === invId);
+    if (!inv) return;
+    if (!pendingPicks) pendingPicks = Array(playerCount).fill(null);
+    pendingPicks[slot] = inv;
+    setConfirmBarVisible(true);
+    updatePickBtn();
+    renderResults(pendingPicks, false);
+  }
+
   function fillCard(card, inv, i, animate) {
     const isPending = pendingPicks !== null;
     card.className  = `result-card cls-${inv.class}`;
@@ -303,6 +277,16 @@
       ${isPending ? `<button class="reroll-btn" title="Reroll this investigator" onclick="rerollCard(${i})">⟳</button>` : ''}
       <div class="card-name">${inv.name}</div>
       <div class="card-role">${inv.role}</div>
+      <div class="card-stats">
+        <span title="Willpower"><i class="icon">p</i>${inv.willpower}</span>
+        <span title="Intellect"><i class="icon">b</i>${inv.intellect}</span>
+        <span title="Combat"><i class="icon">c</i>${inv.combat}</span>
+        <span title="Agility"><i class="icon">a</i>${inv.agility}</span>
+      </div>
+      <div class="card-health-sanity">
+        <span class="health" title="Health">${inv.health}</span>
+        <span class="sanity" title="Sanity">${inv.sanity}</span>
+      </div>
       <div class="card-expansion">${inv.expansion}</div>
     `;
     if (animate) {
@@ -331,6 +315,7 @@
         !filter ||
         inv.name.toLowerCase().includes(filter) ||
         inv.role.toLowerCase().includes(filter) ||
+        inv.class.toLowerCase().includes(filter) ||
         expansion.toLowerCase().includes(filter)
       );
       if (!members.length) return;
@@ -342,12 +327,16 @@
       list.appendChild(hdr);
 
       members.forEach(inv => {
-        const isPicked = pickedSet.has(inv.name);
+        const id = makeId(inv);
+        const isPicked = pickedSet.has(id);
+        const classIcons = { Guardian: 'f', Seeker: 'h', Rogue: 'd', Mystic: 'g', Survivor: 'e', Neutral: '' };
         const item = document.createElement('div');
         item.className = 'char-item' + (isPicked ? ' picked' : '');
+        item.draggable = true;
+        item.ondragstart = e => e.dataTransfer.setData('invId', id);
           item.innerHTML = `
             <div class="char-left">
-              <div class="dot dot-${inv.class}"></div>
+              <div class="dot dot-${inv.class}">${classIcons[inv.class] || ''}</div>
             <div class="char-info">
               <div class="char-name">${inv.name}</div>
               <div class="char-role">${inv.role}</div>
@@ -355,7 +344,7 @@
           </div>
           <button class="mark-btn"
             title="${isPicked ? 'Unmark' : 'Mark as picked'}"
-              onclick='toggleMark(${JSON.stringify(inv.name)})'
+              onclick='toggleMark(${JSON.stringify(id)})'
           >${isPicked ? '✓' : '+'}</button>`;
         list.appendChild(item);
       });
@@ -367,6 +356,23 @@
       empty.textContent = 'No investigators match.';
       list.appendChild(empty);
     }
+  }
+
+  // ── HISTORY ──────────────────────────────────────────────────────────────────
+  function renderHistory() {
+    const el = document.getElementById('pickHistory');
+    if (!pickHistory.length) { el.innerHTML = '<div style="font-style:italic;">No picks yet</div>'; return; }
+    el.innerHTML = pickHistory.slice().reverse().map(h => {
+      const date = new Date(h.when).toLocaleString();
+      const names = h.picks.map(p => p.name || p).join(', ');
+      return `<div style="margin-bottom:8px;"><strong>${date}</strong><br>${names}</div>`;
+    }).join('');
+  }
+
+  function clearHistory() {
+    pickHistory = [];
+    saveState();
+    renderHistory();
   }
 
   // ── START ────────────────────────────────────────────────────────────────────
