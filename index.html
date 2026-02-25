@@ -329,7 +329,7 @@
       members.forEach(inv => {
         const id = makeId(inv);
         const isPicked = pickedSet.has(id);
-        const classIcons = { Guardian: 'f', Seeker: 'h', Rogue: 'd', Mystic: 'g', Survivor: 'e', Neutral: '' };
+        const classIcons = { Guardian: 'f', Seeker: 'h', Rogue: 'd', Mystic: 'g', Survivor: 'e', Neutral: 'u' };
         const item = document.createElement('div');
         item.className = 'char-item' + (isPicked ? ' picked' : '');
         item.draggable = true;
