@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arkham Investigator Picker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f0e8;
+      --surface: #ffffff;
+      --border: #d9d0be;
+      --text: #1a1612;
+      --muted: #7a7060;
+      --accent: #8b2020;
+      --accent-light: #c94040;
+      --picked-bg: #ede9e0;
+      --picked-text: #a89e8e;
+      --radius: 6px;
+    }
+
+    body {
+      font-family: 'Lato', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 40px 20px 60px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    header p {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      font-weight: 300;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .divider {
+      width: 60px; height: 1px;
+      background: var(--accent);
+      margin: 16px auto 0;
+    }
+
+    /* ── LAYOUT ── */
+    .main-layout {
+      max-width: 980px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 28px;
+      align-items: start;
+    }
+    @media (max-width: 720px) {
+      .main-layout { grid-template-columns: 1fr; }
+    }
+
+    /* ── PANEL SHARED ── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+    }
+
+    /* ── PLAYER COUNT ── */
+    .player-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .player-row label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      white-space: nowrap;
+      font-weight: 700;
+    }
+    .player-btns {
+      display: flex;
+      gap: 6px;
+    }
+    .player-btn {
+      width: 36px; height: 36px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg);
+      font-family: 'Lato', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .player-btn:hover { border-color: var(--muted); color: var(--text); }
+    .player-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* ── RESULTS GRID ── */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+      min-height: 110px;
+    }
+
+    .result-card {
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 18px 14px;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 110px;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .result-card.revealed {
+      background: #fff7f0;
+      border: 1px solid var(--accent);
+    }
+    .result-card .player-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .result-card .card-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1.2;
+      opacity: 0;
+      transform: translateY(5px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .result-card .card-role {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 5px;
+      opacity: 0;
+      transition: opacity 0.35s ease 0.12s;
+    }
+    .result-card .card-expansion {
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-top: 3px;
+      font-style: italic;
+      opacity: 0;
+      transition: opacity 0.35s ease 0.22s;
+    }
+    .result-card.revealed .card-name,
+    .result-card.revealed .card-role,
+    .result-card.revealed .card-expansion {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .result-card .placeholder-text {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* ── STATS + PROGRESS ── */
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 28px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+      margin-bottom: 14px;
+    }
+    .stats span strong {
+      color: var(--text);
+      font-size: 1.1rem;
+      display: block;
+      text-align: center;
+    }
+    .progress-bar-wrap {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .progress-bar {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.5s ease;
+    }
+
+    /* ── ACTION BUTTONS ── */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      padding: 12px 18px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-family: 'Lato', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button:active { transform: scale(0.98); }
+    .btn-pick {
+      flex: 1;
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-pick:hover:not(:disabled) { background: var(--accent-light); }
+    .btn-pick:disabled { background: var(--picked-text); cursor: not-allowed; }
+    .btn-reset {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-reset:hover { border-color: var(--muted); color: var(--text); }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .sidebar-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .sidebar-header span {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .filter-row {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .filter-row input {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-family: 'Lato', sans-serif;
+      font-size: 0.8rem;
+      background: var(--bg);
+      color: var(--text);
+      outline: none;
+    }
+    .filter-row input:focus { border-color: var(--accent); }
+
+    .char-list {
+      max-height: 520px;
+      overflow-y: auto;
+    }
+    .char-list::-webkit-scrollbar { width: 4px; }
+    .char-list::-webkit-scrollbar-track { background: transparent; }
+    .char-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .char-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 16px;
+      border-bottom: 1px solid #f0ece4;
+      font-size: 0.81rem;
+      transition: background 0.12s;
+    }
+    .char-item:last-child { border-bottom: none; }
+    .char-item:hover { background: #faf8f4; }
+    .char-item.picked { color: var(--picked-text); }
+
+    .char-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-Guardian { background: #2a6099; }
+    .dot-Seeker   { background: #c6871a; }
+    .dot-Rogue    { background: #2a8040; }
+    .dot-Mystic   { background: #6a3a9a; }
+    .dot-Survivor { background: #b84a10; }
+    .dot-Neutral  { background: #888; }
+
+    .char-info .char-name { font-weight: 600; }
+    .char-info .char-role { font-size: 0.7rem; color: var(--muted); }
+    .char-item.picked .char-role { color: var(--picked-text); }
+
+    /* manual-mark toggle button */
+    .mark-btn {
+      flex-shrink: 0;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .mark-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .char-item.picked .mark-btn {
+      background: var(--picked-text);
+      border-color: var(--picked-text);
+      color: #fff;
+    }
+    .mark-btn:active { transform: scale(0.92); }
+
+    /* error notice */
+    .error-notice {
+      background: #fff3f3;
+      border: 1px solid #e8c0c0;
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      font-size: 0.85rem;
+      color: var(--accent);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Arkham Investigator Picker</h1>
+  <p>Random selection · no repeats</p>
+  <div class="divider"></div>
+</header>
+
+<div class="main-layout">
+  <div class="panel">
+
+    <!-- Player count -->
+    <div class="player-row">
+      <label>Players</label>
+      <div class="player-btns" id="playerBtns">
+        <button class="player-btn active" data-n="1" onclick="setPlayers(1)">1</button>
+        <button class="player-btn"        data-n="2" onclick="setPlayers(2)">2</button>
+        <button class="player-btn"        data-n="3" onclick="setPlayers(3)">3</button>
+        <button class="player-btn"        data-n="4" onclick="setPlayers(4)">4</button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="results-grid" id="resultsGrid"></div>
+
+    <!-- Stats -->
+    <div class="stats">
+      <span><strong id="statRemaining">—</strong>Remaining</span>
+      <span><strong id="statPicked">—</strong>Picked</span>
+      <span><strong id="statTotal">—</strong>Total</span>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progressBar" style="width:0%"></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="btn-row">
+      <button class="btn-pick" id="btnPick" onclick="pickInvestigators()">Pick Investigator</button>
+      <button class="btn-reset" onclick="resetPicks()">↺ Reset</button>
+    </div>
+
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span>Full Roster</span>
+    </div>
+    <div class="filter-row">
+      <input type="text" id="filterInput" placeholder="Filter investigators…" oninput="renderList()" />
+    </div>
+    <div class="char-list" id="charList"></div>
+  </div>
+</div>
+
+<script>
+  // ── CONFIG ──────────────────────────────────────────────────────────────────
+  // Path to your JSON file. If hosting on GitHub Pages, this should be relative:
+  // e.g.  './investigators.json'  or  'investigators.json'
+  const DATA_URL = './investigators.json';
+
+  // ── STATE ───────────────────────────────────────────────────────────────────
+  let investigators = [];
+  let pickedSet     = new Set();   // names of picked investigators
+  let playerCount   = 1;
+  let lastPickedNames = [];        // names picked in the last round
+
+  // ── BOOT ────────────────────────────────────────────────────────────────────
+  async function init() {
+    try {
+      const res  = await fetch(DATA_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      investigators = await res.json();
+      updateStats();
+      renderResults();
+      renderList();
+    } catch (e) {
+      document.querySelector('.main-layout').innerHTML =
+        `<div class="error-notice">
+          Could not load <code>investigators.json</code>.<br>
+          Make sure it is in the same folder as this HTML file and you are
+          serving via a local server or GitHub Pages (not opened as a local file).
+        </div>`;
+    }
+  }
+
+  // ── PLAYER COUNT ────────────────────────────────────────────────────────────
+  function setPlayers(n) {
+    playerCount = n;
+    document.querySelectorAll('.player-btn').forEach(btn => {
+      btn.classList.toggle('active', +btn.dataset.n === n);
+    });
+    updatePickBtnLabel();
+    renderResults();
+  }
+
+  function updatePickBtnLabel() {
+    const btn = document.getElementById('btnPick');
+    btn.textContent = playerCount === 1
+      ? 'Pick Investigator'
+      : `Pick ${playerCount} Investigators`;
+  }
+
+  // ── PICKING ─────────────────────────────────────────────────────────────────
+  function getAvailable() {
+    return investigators.filter(inv => !pickedSet.has(inv.name));
+  }
+
+  function pickInvestigators() {
+    const available = getAvailable();
+    if (available.length < playerCount) return;
+
+    // Fisher-Yates shuffle then take first N
+    const pool = [...available];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    const chosen = pool.slice(0, playerCount);
+    lastPickedNames = chosen.map(c => c.name);
+    chosen.forEach(c => pickedSet.add(c.name));
+
+    updateStats();
+    renderResults(chosen);
+    renderList();
+  }
+
+  // ── MANUAL MARK ─────────────────────────────────────────────────────────────
+  function toggleMark(name) {
+    if (pickedSet.has(name)) {
+      pickedSet.delete(name);
+      // also remove from lastPickedNames display if present
+      lastPickedNames = lastPickedNames.filter(n => n !== name);
+    } else {
+      pickedSet.add(name);
+    }
+    updateStats();
+    renderResults();
+    renderList();
+  }
+
+  // ── RESET ───────────────────────────────────────────────────────────────────
+  function resetPicks() {
+    pickedSet.clear();
+    lastPickedNames = [];
+    updateStats();
+    renderResults();
+    renderList();
+  }
+
+  // ── STATS ───────────────────────────────────────────────────────────────────
+  function updateStats() {
+    const total     = investigators.length;
+    const picked    = pickedSet.size;
+    const remaining = total - picked;
+    document.getElementById('statTotal').textContent     = total;
+    document.getElementById('statPicked').textContent    = picked;
+    document.getElementById('statRemaining').textContent = remaining;
+    document.getElementById('progressBar').style.width   = total ? (picked / total * 100) + '%' : '0%';
+
+    const btn = document.getElementById('btnPick');
+    if (btn) btn.disabled = remaining < playerCount;
+  }
+
+  // ── RESULTS GRID ────────────────────────────────────────────────────────────
+  function renderResults(freshlyPicked) {
+    const grid = document.getElementById('resultsGrid');
+    grid.innerHTML = '';
+
+    for (let i = 0; i < playerCount; i++) {
+      const card = document.createElement('div');
+      card.className = 'result-card';
+
+      const inv = freshlyPicked ? freshlyPicked[i] : null;
+
+      if (playerCount > 1) {
+        const lbl = document.createElement('div');
+        lbl.className = 'player-label';
+        lbl.textContent = `Player ${i + 1}`;
+        card.appendChild(lbl);
+      }
+
+      if (inv) {
+        card.innerHTML += `
+          <div class="card-name">${inv.name}</div>
+          <div class="card-role">${inv.role}</div>
+          <div class="card-expansion">${inv.expansion}</div>`;
+        // trigger animation next frame
+        requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add('revealed')));
+      } else {
+        card.innerHTML += `<div class="placeholder-text">—</div>`;
+      }
+
+      grid.appendChild(card);
+    }
+  }
+
+  // ── ROSTER LIST ─────────────────────────────────────────────────────────────
+  function renderList() {
+    const filter = document.getElementById('filterInput').value.toLowerCase();
+    const list   = document.getElementById('charList');
+    list.innerHTML = '';
+
+    investigators
+      .filter(inv => !filter ||
+        inv.name.toLowerCase().includes(filter) ||
+        inv.role.toLowerCase().includes(filter) ||
+        inv.expansion.toLowerCase().includes(filter))
+      .forEach(inv => {
+        const isPicked = pickedSet.has(inv.name);
+
+        const item = document.createElement('div');
+        item.className = 'char-item' + (isPicked ? ' picked' : '');
+
+        item.innerHTML = `
+          <div class="char-left">
+            <div class="dot dot-${inv.class}"></div>
+            <div class="char-info">
+              <div class="char-name">${inv.name}</div>
+              <div class="char-role">${inv.role}</div>
+            </div>
+          </div>
+          <button
+            class="mark-btn"
+            title="${isPicked ? 'Unmark' : 'Mark as picked'}"
+            onclick="toggleMark(${JSON.stringify(inv.name)})"
+          >${isPicked ? '✓' : '+'}</button>`;
+
+        list.appendChild(item);
+      });
+  }
+
+  // ── START ───────────────────────────────────────────────────────────────────
+  init();
+</script>
+</body>
+</html>
